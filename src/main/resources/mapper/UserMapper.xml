@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.mapper.UserMapper">
+
+    <!--
+        ============================================
+        解决字段名与实体类属性名不同的方法3：使用 resultMap 自定义映射
+        ============================================
+        数据库表字段: user_name (下划线命名)
+        实体类属性:   userName (驼峰命名)
+        解决: 使用 <resultMap> 标签手动配置字段与属性的映射关系
+        优点: 最灵活，可以处理复杂的映射关系（如一对多、多对一）
+    -->
+
+    <!--
+        resultMap 自定义映射配置:
+        id: 唯一标识，供 select 标签引用
+        type: 映射的实体类全限定名
+    -->
+    <resultMap id="userResultMap" type="com.example.pojo.User">
+        <!--
+            <id>: 配置主键字段映射
+            column: 数据库表中的字段名
+            property: 实体类中的属性名
+        -->
+        <id column="id" property="id"/>
+
+        <!--
+            <result>: 配置普通字段映射
+            column: 数据库表中的字段名 (user_name)
+            property: 实体类中的属性名 (userName)
+        -->
+        <result column="user_name" property="userName"/>
+
+        <!-- 相同名称的字段可以省略，但建议显式配置以增强可读性 -->
+        <result column="age" property="age"/>
+    </resultMap>
+
+    <!-- 方式1: 单个参数传递 - 使用 resultMap -->
+    <select id="selectUserByName" resultMap="userResultMap">
+        SELECT * FROM user WHERE user_name = #{username} LIMIT 1
+    </select>
+
+    <!-- 方式2: 多个参数传递 (不使用 @Param) - 使用 resultMap -->
+    <select id="checkLogin" resultMap="userResultMap">
+        SELECT * FROM user WHERE user_name = #{param1} AND age = #{param2}
+    </select>
+
+    <!-- 方式3: Map 参数传递 - 使用 resultMap -->
+    <select id="checkLoginByMap" resultMap="userResultMap">
+        SELECT * FROM user WHERE user_name = #{username} AND age = #{password}
+    </select>
+
+    <!-- 方式4: POJO 对象参数传递 -->
+    <insert id="insertUser" parameterType="com.example.pojo.User"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user(user_name, age) VALUES(#{userName}, #{age})
+    </insert>
+
+    <!-- 获取自增主键: 插入用户并返回自增ID -->
+    <insert id="insertUserAndGetId" parameterType="com.example.pojo.User"
+            useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO user(user_name, age) VALUES(#{userName}, #{age})
+    </insert>
+
+    <!-- 方式5: 多个参数传递 (使用 @Param 注解) - 使用 resultMap -->
+    <select id="checkLoginByParam" resultMap="userResultMap">
+        SELECT * FROM user WHERE user_name = #{username} AND age = #{password}
+    </select>
+
+    <!-- 查询所有 - 使用 resultMap -->
+    <select id="findAll" resultMap="userResultMap">
+        SELECT * FROM user
+    </select>
+
+    <!-- 根据 ID 查询 - 使用 resultMap -->
+    <select id="findById" resultMap="userResultMap">
+        SELECT * FROM user WHERE id = #{id}
+    </select>
+
+    <!-- 更新用户 -->
+    <update id="updateUser" parameterType="com.example.pojo.User">
+        UPDATE user SET user_name = #{userName}, age = #{age} WHERE id = #{id}
+    </update>
+
+    <!-- 删除用户 -->
+    <delete id="deleteById">
+        DELETE FROM user WHERE id = #{id}
+    </delete>
+
+    <!-- 查询返回单一数值 -->
+    <select id="countUsers" resultType="int">
+        SELECT COUNT(*) FROM user
+    </select>
+
+    <!-- 查询返回数据库中一条数据 -->
+    <select id="findUserNameById" resultType="string">
+        SELECT user_name FROM user WHERE id = #{id}
+    </select>
+
+    <!-- 查询返回 List<String> -->
+    <select id="findAllUserNames" resultType="string">
+        SELECT user_name FROM user
+    </select>
+
+    <!-- 查询返回 List<Map> -->
+    <select id="findAllUserIdAndNames" resultType="java.util.HashMap">
+        SELECT id, user_name FROM user
+    </select>
+
+    <!-- 单个实体类查询: 根据姓名精确查询 - 使用 resultMap -->
+    <select id="findByName" resultMap="userResultMap">
+        SELECT * FROM user WHERE user_name = #{name} LIMIT 1
+    </select>
+
+    <!-- 单个实体类查询: 根据年龄精确查询 - 使用 resultMap -->
+    <select id="findByAge" resultMap="userResultMap">
+        SELECT * FROM user WHERE age = #{age} LIMIT 1
+    </select>
+
+    <!-- 多个实体类查询: 根据年龄范围查询 - 使用 resultMap -->
+    <select id="findByAgeRange" resultMap="userResultMap">
+        SELECT * FROM user WHERE age BETWEEN #{minAge} AND #{maxAge}
+    </select>
+
+    <!-- 多个实体类查询: 根据关键词模糊查询姓名 - 使用 resultMap -->
+    <select id="findByKeyword" resultMap="userResultMap">
+        SELECT * FROM user WHERE user_name LIKE CONCAT('%', #{keyword}, '%')
+    </select>
+
+    <!-- 多个实体类查询: 查询年龄大于指定值的用户 - 使用 resultMap -->
+    <select id="findByAgeGreaterThan" resultMap="userResultMap">
+        SELECT * FROM user WHERE age > #{age}
+    </select>
+
+    <!-- 模糊查询: 根据姓名前缀查询 - 使用 resultMap -->
+    <select id="findByPrefix" resultMap="userResultMap">
+        SELECT * FROM user WHERE user_name LIKE CONCAT(#{prefix}, '%')
+    </select>
+
+    <!-- 模糊查询: 根据姓名后缀查询 - 使用 resultMap -->
+    <select id="findBySuffix" resultMap="userResultMap">
+        SELECT * FROM user WHERE user_name LIKE CONCAT('%', #{suffix})
+    </select>
+
+    <!-- 动态表名查询: 根据表名查询所有记录 - 使用 resultMap -->
+    <select id="findAllFromTable" resultType="java.util.HashMap">
+        SELECT * FROM ${tableName}
+    </select>
+
+    <!-- 批量删除: 根据ID列表批量删除用户 -->
+    <delete id="batchDeleteByIds">
+        DELETE FROM user WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 批量删除: 根据年龄范围批量删除用户 -->
+    <delete id="batchDeleteByAgeRange">
+        DELETE FROM user WHERE age BETWEEN #{minAge} AND #{maxAge}
+    </delete>
+
+    <!--
+        ============================================
+        多对一映射关系处理方式1：级联方式
+        ============================================
+        场景：查询用户时同时获取其所属部门信息
+        实现：使用级联属性赋值（dept.deptId, dept.deptName）
+    -->
+
+    <!-- 多对一查询：根据用户ID查询用户及其部门信息（级联方式） -->
+    <select id="getUserWithDeptById" resultMap="userWithDeptResultMap">
+        SELECT
+            u.id,
+            u.user_name,
+            u.age,
+            u.dept_id,
+            d.dept_id AS d_dept_id,
+            d.dept_name
+        FROM user u
+        LEFT JOIN department d ON u.dept_id = d.dept_id
+        WHERE u.id = #{id}
+    </select>
+
+    <!--
+        ============================================
+        【级联方式】resultMap 配置
+        通过 dept.deptId 和 dept.deptName 级联赋值
+        ============================================
+    -->
+    <resultMap id="userWithDeptResultMap" type="com.example.pojo.User">
+        <!-- 用户主键 -->
+        <id column="id" property="id"/>
+
+        <!-- 用户普通字段 -->
+        <result column="user_name" property="userName"/>
+        <result column="age" property="age"/>
+
+        <!--
+            ============================================
+            【级联方式核心】多对一映射配置
+            ============================================
+            property="dept.deptId" 表示：
+            - 调用 User 对象的 getDept() 获取 Department 对象
+            - 然后调用 Department 对象的 setDeptId() 设置部门ID
+
+            注意：需要确保 Department 对象不为 null
+        -->
+        <!-- 部门ID映射：dept_id -> dept.deptId -->
+        <result column="dept_id" property="dept.deptId"/>
+
+        <!-- 部门名称映射：dept_name -> dept.deptName -->
+        <result column="dept_name" property="dept.deptName"/>
+    </resultMap>
+
+    <!--
+        ============================================
+        多对一映射关系处理方式2：使用 association 标签
+        ============================================
+        场景：查询用户时同时获取其所属部门信息
+        实现：使用 <association> 标签专门配置多对一关系
+        优点：结构清晰，可读性更好，支持延迟加载
+    -->
+
+    <!-- 多对一查询：根据用户ID查询用户及其部门信息（association 方式） -->
+    <!-- 【修改位置1】SQL 语句与级联方式相同 -->
+    <select id="getUserWithDeptByIdAssociation" resultMap="userWithDeptAssociationMap">
+        SELECT
+            u.id,
+            u.user_name,
+            u.age,
+            u.dept_id,
+            d.dept_id AS d_dept_id,
+            d.dept_name
+        FROM user u
+        LEFT JOIN department d ON u.dept_id = d.dept_id
+        WHERE u.id = #{id}
+    </select>
+
+    <!--
+        ============================================
+        【修改位置2】使用 association 标签配置多对一映射
+        ============================================
+    -->
+    <resultMap id="userWithDeptAssociationMap" type="com.example.pojo.User">
+        <!-- 用户主键 -->
+        <id column="id" property="id"/>
+
+        <!-- 用户普通字段 -->
+        <result column="user_name" property="userName"/>
+        <result column="age" property="age"/>
+
+        <!--
+            ============================================
+            【修改位置3】association 标签配置多对一关系
+            ============================================
+            property: User 实体类中的部门属性名（dept）
+            javaType: 部门对象的类型（Department）
+        -->
+        <association property="dept" javaType="com.example.pojo.Department">
+            <!-- 【修改位置4】部门主键映射 -->
+            <id column="dept_id" property="deptId"/>
+            <!-- 【修改位置5】部门普通字段映射 -->
+            <result column="dept_name" property="deptName"/>
+        </association>
+    </resultMap>
+
+    <!--
+        ============================================
+        多对一映射关系处理方式3：分步查询
+        ============================================
+        场景：查询用户时通过分步查询获取其所属部门信息
+        实现：
+            第1步：查询用户信息（包含 dept_id）
+            第2步：根据 dept_id 调用 DepartmentMapper.getDeptById 查询部门信息
+        优点：
+            1. 支持延迟加载（按需查询）
+            2. SQL 语句简单，易于维护
+            3. 可复用 DepartmentMapper 中的查询
+    -->
+
+    <!--
+        ============================================
+        【步骤3】分步查询：只查询用户表，不 JOIN 部门表
+        ============================================
+    -->
+    <select id="getUserWithDeptByStep" resultMap="userWithDeptStepMap">
+        SELECT id, user_name, age, dept_id FROM user WHERE id = #{id}
+    </select>
+
+    <!--
+        ============================================
+        【步骤4】分步查询 resultMap 配置
+        ============================================
+    -->
+    <resultMap id="userWithDeptStepMap" type="com.example.pojo.User">
+        <!-- 用户主键 -->
+        <id column="id" property="id"/>
+
+        <!-- 用户普通字段 -->
+        <result column="user_name" property="userName"/>
+        <result column="age" property="age"/>
+
+        <!--
+            ============================================
+            【步骤5】association 分步查询配置
+            ============================================
+            property: User 实体类中的部门属性名（dept）
+            select: 要调用的查询语句（namespace.id）
+                    这里调用 DepartmentMapper.getDeptById
+            column: 传递给 select 的参数列（dept_id）
+                    将 user 表的 dept_id 作为参数传给 getDeptById
+        -->
+        <association property="dept"
+                     select="com.example.mapper.DepartmentMapper.getDeptById"
+                     column="dept_id"/>
+    </resultMap>
+
+    <!--
+        ============================================
+        【步骤1】一对多分步查询：根据部门ID查询用户列表
+        ============================================
+        这个查询将被 DepartmentMapper 中的一对多分步查询调用
+        通过 namespace.id 方式引用：com.example.mapper.UserMapper.getUsersByDeptId
+    -->
+    <select id="getUsersByDeptId" resultMap="userResultMap">
+        SELECT id, user_name, age FROM user WHERE dept_id = #{deptId}
+    </select>
+
+</mapper>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.mapper.DepartmentMapper">
+
+    <!--
+        ============================================
+        【步骤1】分步查询：根据部门ID查询部门信息
+        ============================================
+        这个查询将被 UserMapper 中的分步查询调用
+        通过 namespace.id 方式引用：com.example.mapper.DepartmentMapper.getDeptById
+    -->
+    <select id="getDeptById" resultType="com.example.pojo.Department">
+        SELECT
+            dept_id AS deptId,
+            dept_name AS deptName
+        FROM department
+        WHERE dept_id = #{deptId}
+    </select>
+
+    <!--
+        ============================================
+        一对多映射关系处理方式1：使用 collection 标签
+        ============================================
+        场景：查询部门时同时获取该部门下的所有用户信息
+        实现：使用 <collection> 标签配置一对多关系
+    -->
+
+    <!--
+        ============================================
+        【步骤1】一对多查询：根据部门ID查询部门及其所有用户
+        ============================================
+        使用 LEFT JOIN 关联 user 表获取用户列表
+    -->
+    <select id="getDeptWithUsersById" resultMap="deptWithUsersResultMap">
+        SELECT
+            d.dept_id,
+            d.dept_name,
+            u.id,
+            u.user_name,
+            u.age
+        FROM department d
+        LEFT JOIN user u ON d.dept_id = u.dept_id
+        WHERE d.dept_id = #{id}
+    </select>
+
+    <!--
+        ============================================
+        【步骤2】使用 collection 标签配置一对多映射
+        ============================================
+        property: Department 实体类中的用户列表属性名（users）
+        ofType: 集合中元素的类型（User）
+    -->
+    <resultMap id="deptWithUsersResultMap" type="com.example.pojo.Department">
+        <!-- 部门主键 -->
+        <id column="dept_id" property="deptId"/>
+
+        <!-- 部门普通字段 -->
+        <result column="dept_name" property="deptName"/>
+
+        <!--
+            ============================================
+            【步骤3】collection 标签配置一对多关系
+            ============================================
+            property: Department 实体类中的集合属性名（users）
+            ofType: 集合中元素的类型（User）
+        -->
+        <collection property="users" ofType="com.example.pojo.User">
+            <!-- 用户主键 -->
+            <id column="id" property="id"/>
+            <!-- 用户普通字段 -->
+            <result column="user_name" property="userName"/>
+            <result column="age" property="age"/>
+        </collection>
+    </resultMap>
+
+    <!--
+        ============================================
+        一对多映射关系处理方式2：分步查询
+        ============================================
+        场景：查询部门时通过分步查询获取该部门下的所有用户
+        实现：
+            第1步：查询部门信息
+            第2步：根据 dept_id 调用 UserMapper.getUsersByDeptId 查询用户列表
+        优点：
+            1. 支持延迟加载（按需查询）
+            2. SQL 语句简单，易于维护
+            3. 可复用 UserMapper 中的查询
+    -->
+
+    <!--
+        ============================================
+        【步骤2】分步查询：只查询部门表，不 JOIN 用户表
+        ============================================
+    -->
+    <select id="getDeptWithUsersByStep" resultMap="deptWithUsersStepMap">
+        SELECT dept_id, dept_name FROM department WHERE dept_id = #{id}
+    </select>
+
+    <!--
+        ============================================
+        【步骤3】分步查询 resultMap 配置
+        ============================================
+    -->
+    <resultMap id="deptWithUsersStepMap" type="com.example.pojo.Department">
+        <!-- 部门主键 -->
+        <id column="dept_id" property="deptId"/>
+
+        <!-- 部门普通字段 -->
+        <result column="dept_name" property="deptName"/>
+
+        <!--
+            ============================================
+            【步骤4】collection 分步查询配置
+            ============================================
+            property: Department 实体类中的集合属性名（users）
+            select: 要调用的查询语句（namespace.id）
+                    这里调用 UserMapper.getUsersByDeptId
+            column: 传递给 select 的参数列（dept_id）
+                    将 department 表的 dept_id 作为参数传给 getUsersByDeptId
+        -->
+        <collection property="users"
+                    select="com.example.mapper.UserMapper.getUsersByDeptId"
+                    column="dept_id"/>
+    </resultMap>
+
+</mapper>

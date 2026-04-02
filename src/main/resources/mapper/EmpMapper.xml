@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.mapper.EmpMapper">
+
+    <!--
+        if标签：用于动态SQL条件判断
+        test属性：编写判断条件，返回true则拼接该标签内的SQL
+        特点：当条件不满足时，不会拼接该部分SQL
+    -->
+    <select id="getEmpByCondition" resultType="com.example.pojo.Emp">
+        select * from t_emp where 1=1
+        <if test="empName != null and empName != ''">
+            and emp_name = #{empName}
+        </if>
+        <if test="age != null and age != ''">
+            and age = #{age}
+        </if>
+        <if test="gender != null and gender != ''">
+            and gender = #{gender}
+        </if>
+        <if test="email != null and email != ''">
+            and email = #{email}
+        </if>
+    </select>
+
+    <!--
+        where标签：用于动态SQL条件拼接
+        特点：
+        1. 自动添加WHERE关键字
+        2. 自动去除第一个条件前多余的AND或OR
+        3. 当所有条件都不满足时，不会添加WHERE（避免语法错误）
+        优势：比if标签+where 1=1的方式更优雅
+    -->
+    <select id="getEmpByConditionWhere" resultType="com.example.pojo.Emp">
+        select * from t_emp
+        <where>
+            <if test="empName != null and empName != ''">
+                emp_name = #{empName}
+            </if>
+            <if test="age != null and age != ''">
+                and age = #{age}
+            </if>
+            <if test="gender != null and gender != ''">
+                and gender = #{gender}
+            </if>
+            <if test="email != null and email != ''">
+                and email = #{email}
+            </if>
+        </where>
+    </select>
+
+    <!--
+        trim标签：万能格式化标签，用于自定义前缀、后缀处理
+        属性说明：
+        - prefix：在trim标签内容前添加指定前缀（如 WHERE）
+        - prefixOverrides：去除内容前多余的指定字符（如 AND/OR）
+        - suffix：在trim标签内容后添加指定后缀
+        - suffixOverrides：去除内容后多余的指定字符（如 AND/OR）
+        优势：比where标签更灵活，可以自定义各种SQL片段格式
+    -->
+    <select id="getEmpByConditionTrim" resultType="com.example.pojo.Emp">
+        select * from t_emp
+        <trim prefix="where" suffixOverrides="and">
+            <if test="empName != null and empName != ''">
+                emp_name = #{empName} and
+            </if>
+            <if test="age != null and age != ''">
+                age = #{age} and
+            </if>
+            <if test="gender != null and gender != ''">
+                gender = #{gender} and
+            </if>
+            <if test="email != null and email != ''">
+                email = #{email} and
+            </if>
+        </trim>
+    </select>
+
+    <!--
+        choose/when/otherwise标签：多选一条件判断
+        特点：
+        1. 类似Java的switch-case语句
+        2. 只执行第一个满足条件的when分支，其他分支忽略
+        3. 当所有when都不满足时，执行otherwise分支
+        适用场景：有优先级顺序的条件查询，如：先按姓名查，没有则按年龄查，再没有则查询全部
+    -->
+    <select id="getEmpByChoose" resultType="com.example.pojo.Emp">
+        select * from t_emp
+        <where>
+            <choose>
+                <when test="empName != null and empName != ''">
+                    emp_name = #{empName}
+                </when>
+                <when test="age != null and age != ''">
+                    age = #{age}
+                </when>
+                <when test="gender != null and gender != ''">
+                    gender = #{gender}
+                </when>
+                <otherwise>
+                    <!-- 其他情况：查询所有数据 -->
+                    1=1
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+
+    <!--
+        foreach标签：用于遍历集合（批量操作）
+        属性说明：
+        - collection：要遍历的集合参数名（与@Param注解对应）
+        - item：集合中每个元素的别名（用于引用）
+        - separator：元素之间的分隔符（如批量插入时的逗号）
+        - open/close：整个遍历结果的前后缀（可选）
+        - index：当前索引（可选）
+        适用场景：批量插入、批量删除、IN查询等
+    -->
+    <insert id="insertEmps">
+        insert into t_emp (emp_name, age, gender, email) values
+        <foreach collection="emps" item="emp" separator=",">
+            (#{emp.empName}, #{emp.age}, #{emp.gender}, #{emp.email})
+        </foreach>
+    </insert>
+
+    <!--
+        foreach标签实现批量删除（使用IN语句）
+        属性说明：
+        - collection：要遍历的集合参数名
+        - item：集合中每个元素的别名
+        - separator：元素之间的分隔符（IN语句中用逗号）
+        - open：遍历结果的前缀（IN语句的左括号）
+        - close：遍历结果的后缀（IN语句的右括号）
+    -->
+    <delete id="deleteEmpsByIds">
+        delete from t_emp where emp_id in
+        <foreach collection="empIds" item="empId" separator="," open="(" close=")">
+            #{empId}
+        </foreach>
+    </delete>
+
+</mapper>

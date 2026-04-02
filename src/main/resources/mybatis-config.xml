@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD MyBatis 3 Configuration//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+    <!--
+        ============================================
+        解决字段名与实体类属性名不同的方法2：开启驼峰命名自动映射
+        ============================================
+        数据库表字段: user_name (下划线命名)
+        实体类属性:   userName (驼峰命名)
+        配置: mapUnderscoreToCamelCase=true 自动将下划线映射为驼峰
+    -->
+
+    <!-- 设置 -->
+    <settings>
+        <!-- 打开延迟加载的开关 -->
+        <setting name="lazyLoadingEnabled" value="true"/>
+        <!-- 将积极加载改为消息加载 (即按需加载) -->
+        <setting name="aggressiveLazyLoading" value="false"/>
+        <!--
+            开启驼峰命名自动映射
+            作用: 将数据库中的下划线命名(user_name)自动映射为Java驼峰命名(userName)
+            优点: 无需在SQL中写别名，简化开发
+        -->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+    </settings>
+
+    <!-- 环境配置：开发、测试、生产 -->
+    <environments default="development">
+        <environment id="development">
+            <!-- 事务管理器：使用 JDBC 原生事务 -->
+            <transactionManager type="JDBC"/>
+            <!-- 数据源：使用 MyBatis 内置连接池 -->
+            <dataSource type="POOLED">
+                <!-- 1. 驱动类 (MySQL 8.0+ 通常是这个) -->
+                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+                <!-- 2. 连接地址 (注意：数据库名就是你刚才说的 test-db) -->
+                <property name="url" value="jdbc:mysql://localhost:3306/test_db?useSSL=false&amp;serverTimezone=UTC&amp;characterEncoding=utf8"/>
+                <!-- 3. 用户名 (默认是 root) -->
+                <property name="username" value="root"/>
+                <!-- 4. 密码 (填你数据库的密码) -->
+                <property name="password" value="ln1234567890"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <!-- 映射器：告诉 MyBatis 去哪里找 SQL 映射文件 -->
+    <mappers>
+        <!-- 使用 resource 加载 XML 映射文件 -->
+        <mapper resource="mapper/UserMapper.xml"/>
+        <!-- 【步骤2】注册 DepartmentMapper，用于分步查询 -->
+        <mapper resource="mapper/DepartmentMapper.xml"/>
+        <!-- 注册 EmpMapper，用于动态SQL练习 -->
+        <mapper resource="mapper/EmpMapper.xml"/>
+    </mappers>
+</configuration>

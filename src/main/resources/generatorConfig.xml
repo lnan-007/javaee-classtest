@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+<!--
+    MyBatis逆向工程配置文件
+    作用：配置数据库连接、生成代码的位置、要生成的表等信息
+-->
+<generatorConfiguration>
+
+    <!--
+        ============================================
+        1. 数据库连接配置
+        ============================================
+    -->
+    <context id="default" targetRuntime="MyBatis3">
+
+        <!-- 可选配置：生成的Java文件的编码 -->
+        <property name="javaFileEncoding" value="UTF-8"/>
+
+        <!--
+            ============================================
+            2. JDBC数据库连接配置
+            ============================================
+        -->
+        <jdbcConnection
+                driverClass="com.mysql.cj.jdbc.Driver"
+                connectionURL="jdbc:mysql://localhost:3306/test_db?useSSL=false&amp;serverTimezone=UTC&amp;characterEncoding=utf8"
+                userId="root"
+                password="ln1234567890">
+        </jdbcConnection>
+
+        <!--
+            ============================================
+            3. Java类型解析器配置（可选）
+            作用：控制数据库类型与Java类型的映射
+            ============================================
+        -->
+        <javaTypeResolver>
+            <!-- 是否强制使用BigDecimal类型表示DECIMAL和NUMERIC类型 -->
+            <property name="forceBigDecimals" value="false"/>
+        </javaTypeResolver>
+
+        <!--
+            ============================================
+            4. 实体类（Model）生成配置
+            targetPackage: 生成的实体类所在的包
+            targetProject: 生成的实体类所在的项目路径
+            ============================================
+        -->
+        <javaModelGenerator
+                targetPackage="com.example.pojo"
+                targetProject="src/main/java">
+            <!-- 是否允许子包 -->
+            <property name="enableSubPackages" value="true"/>
+            <!-- 是否清理从数据库返回的字符串前后的空格 -->
+            <property name="trimStrings" value="true"/>
+        </javaModelGenerator>
+
+        <!--
+            ============================================
+            5. Mapper XML文件生成配置
+            targetPackage: 生成的XML文件所在的包
+            targetProject: 生成的XML文件所在的项目路径
+            ============================================
+        -->
+        <sqlMapGenerator
+                targetPackage="mapper"
+                targetProject="src/main/resources">
+            <property name="enableSubPackages" value="true"/>
+        </sqlMapGenerator>
+
+        <!--
+            ============================================
+            6. Mapper接口生成配置
+            type: 生成Mapper接口的类型
+                - ANNOTATEDMAPPER: 使用注解方式（不生成XML）
+                - MIXEDMAPPER: 混合方式（注解+XML）
+                - XMLMAPPER: 使用XML方式（推荐）
+            ============================================
+        -->
+        <javaClientGenerator
+                type="XMLMAPPER"
+                targetPackage="com.example.mapper"
+                targetProject="src/main/java">
+            <property name="enableSubPackages" value="true"/>
+        </javaClientGenerator>
+
+        <!--
+            ============================================
+            7. 要生成的数据库表配置
+            tableName: 数据库表名
+            domainObjectName: 生成的实体类名（可选，默认与表名一致）
+            ============================================
+        -->
+        <!-- 生成t_emp表的代码 -->
+        <table tableName="t_emp" domainObjectName="EmpGenerated">
+            <!-- 是否使用实际列名作为属性名（false表示使用驼峰命名） -->
+            <property name="useActualColumnNames" value="false"/>
+            <!-- 主键生成策略 -->
+            <generatedKey column="emp_id" sqlStatement="MySql" identity="true"/>
+        </table>
+
+        <!-- 可以配置多个表 -->
+        <!-- <table tableName="t_dept" domainObjectName="Dept"/> -->
+
+    </context>
+</generatorConfiguration>
